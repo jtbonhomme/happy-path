@@ -1,306 +1,240 @@
 
 <!doctype html>
+<html lang="en">
+	<head>
+	<meta charset="utf-8">
+	<title>Graph Storyboard</title>
 
-<meta charset="utf-8">
-<title>Graph Storyboard. Add and Prune Dependencies Algorithm</title>
+	<script src="js/d3.v3.js"></script>
+	<script src="js/dagre-d3.js"></script>
+	<link type="text/css" media="all" href="css/style.css" rel="stylesheet" />
 
-<script src="./d3.v3.js"></script>
-<script src="./dagre-d3.js"></script>
-
-<style id="css">
-	h1 {
-	  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-	  margin-top: 0.8em;
-	  margin-bottom: 0.2em;
-	}
-
-	text {
-	  font-weight: 300;
-	  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-	  font-size: 14px;
-	}
-
-	.node rect {
-	  stroke: #333;
-	  fill: #fff;
-	  stroke-width: 1.5px;
-	}
-
-	.node polygon {
-	  stroke: #333;
-	  fill: #fff;
-	  stroke-width: 1.5px;
-	}
-
-	.edgePath path.path {
-	  stroke: #333;
-	  fill: none;
-	  stroke-width: 1.5px;
-	}
-
-	div#top-frame {
-	  height: 350px;
-	}
-
-	div#schedule-frame {
-	  float: none;
-	}
-</style>
-
-<script>
-// Polyfill for PhantomJS. This can be safely ignored if not using PhantomJS.
-// Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind
-if (!Function.prototype.bind) {
-  Function.prototype.bind = function(oThis) {
-    if (typeof this !== 'function') {
-      // closest thing possible to the ECMAScript 5
-      // internal IsCallable function
-      throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
-    }
-
-    var aArgs   = Array.prototype.slice.call(arguments, 1),
-        fToBind = this,
-        fNOP    = function() {},
-        fBound  = function() {
-          return fToBind.apply(this instanceof fNOP && oThis
-                 ? this
-                 : oThis,
-                 aArgs.concat(Array.prototype.slice.call(arguments)));
-        };
-
-    fNOP.prototype = this.prototype;
-    fBound.prototype = new fNOP();
-
-    return fBound;
-  };
-}
-</script>
-
-<script>
-var dagred3Story = function(svgelement, graphType, interframetime) {
-	this.interframetime = interframetime;
-	this.lastrenderTime = null;
-	this.g = new dagreD3.graphlib.Graph().setGraph({});
-	//// Setup animation (if required)
-	//this.g.graph().transition = function(selection) {
-    //  return selection.transition().duration(50);
-    //}.bind(this);
-	this.g.setDefaultEdgeLabel(function() { return {}; });
-  this.g.graph().marginx = 10;
-  this.g.graph().marginy = 10;
-	switch(graphType) {
-	case 'Schedule Network':
-		this.g.graph().rankdir = "LR";
-		this.g.graph().ranksep = 15;
-		this.g.graph().nodesep = 15;
-		break;
-	default:
-		console.log ("graphType of "+x+" is not implemented")
-	}
-	this.svg = d3.select(svgelement);
-  this.inner = this.svg.append("g");
-	this.svg.call(d3.behavior.zoom().on("zoom", (function() {
-		this.inner.attr("transform", "translate(" + d3.event.translate + ")" +
-		                                 "scale(" + d3.event.scale + ")")
-  }).bind(this)));
-	
-	this.t = 0;
-
-	this.dagreD3render = new dagreD3.render();
-};
-
-dagred3Story.prototype.animateFrame = function(RenderAfter, Frame) {
-	this.t += RenderAfter
-	//var that = this;
-	setTimeout(function() {
-		Frame.forEach(function(x) {
-			switch(x[0]) {
-			case 'setActivity':
-				this.g.setNode(x[1],{rx: 5, ry: 5, style: "fill: #ff2; stroke: #000"})
-				break;
-			case 'removeNode':
-				this.g.removeNode(x[1])
-				break;
-			case 'setMilestone':
-				this.g.setNode(x[1],{ shape: 'diamond', style: "fill: #fff; stroke: #000" })
-				break;
-			case 'setStartStop':
-				this.g.setNode(x[1],{ shape: 'circle', style: "fill: #fff; stroke: #000" })
-				break;
-			case 'AddCoherenceEdge':
-				this.g.setEdge(x[1], x[2], {
-					lineInterpolate: 'basis' 
-				});
-				break;
-			case 'AddDependencyEdge':
-				this.g.setEdge(x[1], x[2], {
-					lineInterpolate: 'basis'
-					,label: 'added'
-					,labeloffset: 5
-					,labelpos: 'l'
-				});
-				break;
-			case 'MakeRedundantEdge':
-				this.g.setEdge(x[1], x[2], {
-					style: "stroke: #aaa;   stroke-dasharray: 5, 10;" 
-					,lineInterpolate: 'basis'
-					,arrowheadStyle: "fill: #aaa"
-					,labelpos: 'c'
-					,label: 'pruned'
-					,labelStyle: 'stroke: #aaa'
-				});
-				break;
-			case 'RemoveEdge':
-				this.g.removeEdge(x[1], x[2]);
+	<script>
+		var dagred3Story = function(svgelement, graphType, interframetime) {
+			this.interframetime = interframetime;
+			this.lastrenderTime = null;
+			this.g = new dagreD3.graphlib.Graph().setGraph({});
+			//// Setup animation (if required)
+			//this.g.graph().transition = function(selection) {
+		    //  return selection.transition().duration(50);
+		    //}.bind(this);
+			this.g.setDefaultEdgeLabel(function() { return {}; });
+		  this.g.graph().marginx = 10;
+		  this.g.graph().marginy = 10;
+			switch(graphType) {
+			case 'Schedule Network':
+				this.g.graph().rankdir = "LR";
+				this.g.graph().ranksep = 15;
+				this.g.graph().nodesep = 15;
 				break;
 			default:
-				console.log ("Schedule Network element "+x+" is not implemented")
+				console.log ("graphType of "+x+" is not implemented")
 			}
-		}.bind(this))
-		
-		if (this.g) {
-			// Render
-			this.dagreD3render(this.inner,this.g);
-		}
-	}.bind(this), this.t)
-};
+			this.svg = d3.select(svgelement);
+		  this.inner = this.svg.append("g");
+			this.svg.call(d3.behavior.zoom().on("zoom", (function() {
+				this.inner.attr("transform", "translate(" + d3.event.translate + ")" +
+				                                 "scale(" + d3.event.scale + ")")
+		  }).bind(this)));
+			
+			this.t = 0;
 
-dagred3Story.prototype.animateStory = function(RenderAfter, Story) {
-	this.t += RenderAfter
-	setTimeout(function() {
-		Story.forEach(function(Frame) {
-			this.animateFrame(this.interframetime, Frame);
-		}.bind(this))
-	}.bind(this), this.t)
-};
+			this.dagreD3render = new dagreD3.render();
+		};
 
-</script>
+		dagred3Story.prototype.animateFrame = function(RenderAfter, Frame) {
+			this.t += RenderAfter
+			//var that = this;
+			setTimeout(function() {
+				Frame.forEach(function(x) {
+					switch(x[0]) {
+					case 'setActivity':
+						this.g.setNode(x[1],{rx: 5, ry: 5, style: "fill: #ff2; stroke: #000"})
+						break;
+					case 'removeNode':
+						this.g.removeNode(x[1])
+						break;
+					case 'setMilestone':
+						this.g.setNode(x[1],{ shape: 'diamond', style: "fill: #fff; stroke: #000" })
+						break;
+					case 'setStartStop':
+						this.g.setNode(x[1],{ shape: 'circle', style: "fill: #fff; stroke: #000" })
+						break;
+					case 'AddCoherenceEdge':
+						this.g.setEdge(x[1], x[2], {
+							lineInterpolate: 'basis' 
+						});
+						break;
+					case 'AddDependencyEdge':
+						this.g.setEdge(x[1], x[2], {
+							lineInterpolate: 'basis'
+							,label: 'added'
+							,labeloffset: 5
+							,labelpos: 'l'
+						});
+						break;
+					case 'MakeRedundantEdge':
+						this.g.setEdge(x[1], x[2], {
+							style: "stroke: #aaa;   stroke-dasharray: 5, 10;" 
+							,lineInterpolate: 'basis'
+							,arrowheadStyle: "fill: #aaa"
+							,labelpos: 'c'
+							,label: 'pruned'
+							,labelStyle: 'stroke: #aaa'
+						});
+						break;
+					case 'RemoveEdge':
+						this.g.removeEdge(x[1], x[2]);
+						break;
+					default:
+						console.log ("Schedule Network element "+x+" is not implemented")
+					}
+				}.bind(this))
+				
+				if (this.g) {
+					// Render
+					this.dagreD3render(this.inner,this.g);
+				}
+			}.bind(this), this.t)
+		};
 
-<div id="schedule-frame">
-  <h1>Functionnal steps for primo</h1>
-  <svg id="schedule" width=1150 height=500></svg>
-</div>
+		dagred3Story.prototype.animateStory = function(RenderAfter, Story) {
+			this.t += RenderAfter
+			setTimeout(function() {
+				Story.forEach(function(Frame) {
+					this.animateFrame(this.interframetime, Frame);
+				}.bind(this))
+			}.bind(this), this.t)
+		};
+	</script>
+</head>
 
-<script id="js">
-var framedelay = 20;
+<body>
+	<div id="schedule-frame">
+	  <h1>Functionnal steps for primo</h1>
+	  <svg id="schedule" width=1150 height=500></svg>
+	</div>
 
-var schedulestory = new dagred3Story("#schedule", "Schedule Network",framedelay);
+	<script id="js">
+		var framedelay = 20;
 
-// Create the input graph
+		var schedulestory = new dagred3Story("#schedule", "Schedule Network",framedelay);
 
-schedulestory.animateStory(0,
-[
-	[ 
-		["setStartStop", "Finish"]
-		, 
-		["setStartStop", "Start"]
-		,
-		["setActivity", "A"]
-		,
-		["setActivity", "B"]
-		,
-		["AddCoherenceEdge", "Start", "A"]
-		,
-		["AddCoherenceEdge", "Start", "B"]
-		,
-		["AddCoherenceEdge", "A", "Finish"]
-		,
-		["AddCoherenceEdge", "B", "Finish"]
-	],
-	[
-		["removeNode", "A"]
-		,
-		["setMilestone", "A Start"]
-		, 
-		["setActivity", "A.1"]
-		,  
-		["setActivity", "A.2"]
-		,  
-		["setMilestone", "A Finish"]
-		,
-		["AddCoherenceEdge", "A Start", "A.1"]
-		,
-		["AddCoherenceEdge", "A Start", "A.2"]
-		,
-		["AddCoherenceEdge", "A.1", "A Finish"]
-		,
-		["AddCoherenceEdge", "A.2", "A Finish"]
-		,
-		["AddCoherenceEdge", "Start", "A Start"]
-		,
-		["AddCoherenceEdge", "A Finish", "Finish"]
-	],
-	[ 
-		["removeNode", "A.2"]
-		,
-		["setMilestone", "A.2 Start"]
-		, 
-		["setActivity", "A.2.1"]
-		,  
-		["setActivity", "A.2.2"]
-		,  
-		["setActivity", "A.2.3"]
-		,  
-		["setMilestone", "A.2 Finish"]
-		,
-		["AddCoherenceEdge", "A.2 Start", "A.2.1"]
-		,
-		["AddCoherenceEdge", "A.2 Start", "A.2.2"]
-		,
-		["AddCoherenceEdge", "A.2 Start", "A.2.3"]
-		,
-		["AddCoherenceEdge", "A.2.1", "A.2 Finish"]
-		,
-		["AddCoherenceEdge", "A.2.2", "A.2 Finish"]
-		,
-		["AddCoherenceEdge", "A.2.3", "A.2 Finish"]
-		,
-		["AddCoherenceEdge", "A Start", "A.2 Start"]
-		,
-		["AddCoherenceEdge", "A.2 Finish", "A Finish"]
-	]
-	,
-	[
-		["AddDependencyEdge", "A.1", "A.2 Start"]
-	],
-	[
-		["MakeRedundantEdge", "A Start", "A.2 Start"]
-	],
-	[
-		["MakeRedundantEdge", "A.1", "A Finish"]
-	],
-	[
-		["RemoveEdge", "A Start", "A.2 Start"]
-	],
-	[
-		["RemoveEdge", "A.1", "A Finish"]
-	],
-	[
-		["AddDependencyEdge", "A.2.2", "A.2.3"]
-	],
-	[
-		["MakeRedundantEdge", "A.2 Start", "A.2.3"]
-	],
-	[
-		["MakeRedundantEdge", "A.2.2", "A.2 Finish"]
-	],
-	[
-		["RemoveEdge", "A.2 Start", "A.2.3"]
-	],
-	[
-		["RemoveEdge", "A.2.2", "A.2 Finish"]
-	],
-	[
-		["AddDependencyEdge", "A.2.1", "B"]
-	],
-	[
-		["MakeRedundantEdge", "Start", "B"]
-	],
-	[
-		["RemoveEdge", "Start", "B"],
-		["removeNode", "B"]
-	]
-]);
-</script>
+		// Create the input graph
+
+		schedulestory.animateStory(0,
+		[
+			[ 
+				["setStartStop", "Finish"]
+				, 
+				["setStartStop", "Start"]
+				,
+				["setActivity", "A"]
+				,
+				["setActivity", "B"]
+				,
+				["AddCoherenceEdge", "Start", "A"]
+				,
+				["AddCoherenceEdge", "Start", "B"]
+				,
+				["AddCoherenceEdge", "A", "Finish"]
+				,
+				["AddCoherenceEdge", "B", "Finish"]
+			],
+			[
+				["removeNode", "A"]
+				,
+				["setMilestone", "A Start"]
+				, 
+				["setActivity", "A.1"]
+				,  
+				["setActivity", "A.2"]
+				,  
+				["setMilestone", "A Finish"]
+				,
+				["AddCoherenceEdge", "A Start", "A.1"]
+				,
+				["AddCoherenceEdge", "A Start", "A.2"]
+				,
+				["AddCoherenceEdge", "A.1", "A Finish"]
+				,
+				["AddCoherenceEdge", "A.2", "A Finish"]
+				,
+				["AddCoherenceEdge", "Start", "A Start"]
+				,
+				["AddCoherenceEdge", "A Finish", "Finish"]
+			],
+			[ 
+				["removeNode", "A.2"]
+				,
+				["setMilestone", "A.2 Start"]
+				, 
+				["setActivity", "A.2.1"]
+				,  
+				["setActivity", "A.2.2"]
+				,  
+				["setActivity", "A.2.3"]
+				,  
+				["setMilestone", "A.2 Finish"]
+				,
+				["AddCoherenceEdge", "A.2 Start", "A.2.1"]
+				,
+				["AddCoherenceEdge", "A.2 Start", "A.2.2"]
+				,
+				["AddCoherenceEdge", "A.2 Start", "A.2.3"]
+				,
+				["AddCoherenceEdge", "A.2.1", "A.2 Finish"]
+				,
+				["AddCoherenceEdge", "A.2.2", "A.2 Finish"]
+				,
+				["AddCoherenceEdge", "A.2.3", "A.2 Finish"]
+				,
+				["AddCoherenceEdge", "A Start", "A.2 Start"]
+				,
+				["AddCoherenceEdge", "A.2 Finish", "A Finish"]
+			]
+			,
+			[
+				["AddDependencyEdge", "A.1", "A.2 Start"]
+			],
+			[
+				["MakeRedundantEdge", "A Start", "A.2 Start"]
+			],
+			[
+				["MakeRedundantEdge", "A.1", "A Finish"]
+			],
+			[
+				["RemoveEdge", "A Start", "A.2 Start"]
+			],
+			[
+				["RemoveEdge", "A.1", "A Finish"]
+			],
+			[
+				["AddDependencyEdge", "A.2.2", "A.2.3"]
+			],
+			[
+				["MakeRedundantEdge", "A.2 Start", "A.2.3"]
+			],
+			[
+				["MakeRedundantEdge", "A.2.2", "A.2 Finish"]
+			],
+			[
+				["RemoveEdge", "A.2 Start", "A.2.3"]
+			],
+			[
+				["RemoveEdge", "A.2.2", "A.2 Finish"]
+			],
+			[
+				["AddDependencyEdge", "A.2.1", "B"]
+			],
+			[
+				["MakeRedundantEdge", "Start", "B"]
+			],
+			[
+				["RemoveEdge", "Start", "B"],
+				["removeNode", "B"]
+			]
+		]);
+	</script>
 </body>
 </html>
