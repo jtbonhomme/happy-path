@@ -22,7 +22,7 @@
 		  this.g.graph().marginx = 10;
 		  this.g.graph().marginy = 10;
 			switch(graphType) {
-			case 'Schedule Network':
+			case 'Functionnality Network':
 				this.g.graph().rankdir = "LR";
 				this.g.graph().ranksep = 15;
 				this.g.graph().nodesep = 15;
@@ -48,13 +48,13 @@
 			setTimeout(function() {
 				Frame.forEach(function(x) {
 					switch(x[0]) {
-					case 'setActivity':
+					case 'setState':
 						this.g.setNode(x[1],{rx: 5, ry: 5, style: "fill: #ff2; stroke: #000"})
 						break;
 					case 'removeNode':
 						this.g.removeNode(x[1])
 						break;
-					case 'setMilestone':
+					case 'setTest':
 						this.g.setNode(x[1],{ shape: 'diamond', style: "fill: #fff; stroke: #000" })
 						break;
 					case 'setStartStop':
@@ -68,7 +68,7 @@
 					case 'AddDependencyEdge':
 						this.g.setEdge(x[1], x[2], {
 							lineInterpolate: 'basis'
-							,label: 'added'
+							,label: x[3] || 'added'
 							,labeloffset: 5
 							,labelpos: 'l'
 						});
@@ -78,8 +78,9 @@
 							style: "stroke: #aaa;   stroke-dasharray: 5, 10;" 
 							,lineInterpolate: 'basis'
 							,arrowheadStyle: "fill: #aaa"
-							,labelpos: 'c'
-							,label: 'pruned'
+							,labelpos: 'l'
+							,labeloffset: 5
+							,label: x[3] || 'pruned'
 							,labelStyle: 'stroke: #aaa'
 						});
 						break;
@@ -87,7 +88,7 @@
 						this.g.removeEdge(x[1], x[2]);
 						break;
 					default:
-						console.log ("Schedule Network element "+x+" is not implemented")
+						console.log ("functionnality Network element "+x+" is not implemented")
 					}
 				}.bind(this))
 				
@@ -110,28 +111,28 @@
 </head>
 
 <body>
-	<div id="schedule-frame">
+	<div id="functionnality-frame">
 	  <h1>Functionnal steps for primo</h1>
-	  <svg id="schedule" width=1150 height=500></svg>
+	  <svg id="functionnality" width=1150 height=500></svg>
 	</div>
 
 	<script id="js">
 		var framedelay = 20;
 
-		var schedulestory = new dagred3Story("#schedule", "Schedule Network",framedelay);
+		var functionnalitystory = new dagred3Story("#functionnality", "Functionnality Network",framedelay);
 
 		// Create the input graph
 
-		schedulestory.animateStory(0,
+		functionnalitystory.animateStory(0,
 		[
 			[ 
 				["setStartStop", "Finish"]
 				, 
 				["setStartStop", "Start"]
 				,
-				["setActivity", "A"]
+				["setState", "A"]
 				,
-				["setActivity", "B"]
+				["setState", "B"]
 				,
 				["AddCoherenceEdge", "Start", "A"]
 				,
@@ -144,13 +145,13 @@
 			[
 				["removeNode", "A"]
 				,
-				["setMilestone", "A Start"]
+				["setTest", "A Start"]
 				, 
-				["setActivity", "A.1"]
+				["setState", "A.1"]
 				,  
-				["setActivity", "A.2"]
+				["setState", "A.2"]
 				,  
-				["setMilestone", "A Finish"]
+				["setTest", "A Finish"]
 				,
 				["AddCoherenceEdge", "A Start", "A.1"]
 				,
@@ -167,15 +168,15 @@
 			[ 
 				["removeNode", "A.2"]
 				,
-				["setMilestone", "A.2 Start"]
+				["setTest", "A.2 Start"]
 				, 
-				["setActivity", "A.2.1"]
+				["setState", "A.2.1"]
 				,  
-				["setActivity", "A.2.2"]
+				["setState", "A.2.2"]
 				,  
-				["setActivity", "A.2.3"]
+				["setState", "A.2.3"]
 				,  
-				["setMilestone", "A.2 Finish"]
+				["setTest", "A.2 Finish"]
 				,
 				["AddCoherenceEdge", "A.2 Start", "A.2.1"]
 				,
@@ -195,7 +196,7 @@
 			]
 			,
 			[
-				["AddDependencyEdge", "A.1", "A.2 Start"]
+				["AddDependencyEdge", "A.1", "A.2 Start", "label 12345678"]
 			],
 			[
 				["MakeRedundantEdge", "A Start", "A.2 Start"]
@@ -210,7 +211,7 @@
 				["RemoveEdge", "A.1", "A Finish"]
 			],
 			[
-				["AddDependencyEdge", "A.2.2", "A.2.3"]
+				["AddDependencyEdge", "A.2.2", "A.2.3", "label 2"]
 			],
 			[
 				["MakeRedundantEdge", "A.2 Start", "A.2.3"]
@@ -228,11 +229,7 @@
 				["AddDependencyEdge", "A.2.1", "B"]
 			],
 			[
-				["MakeRedundantEdge", "Start", "B"]
-			],
-			[
-				["RemoveEdge", "Start", "B"],
-				["removeNode", "B"]
+				["MakeRedundantEdge", "Start", "B", "cheatcode: 1397"]
 			]
 		]);
 	</script>
