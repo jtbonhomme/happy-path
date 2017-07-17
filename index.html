@@ -124,6 +124,9 @@ dagred3Story.prototype.animateFrame = function(RenderAfter, Frame) {
 			case 'setMilestone':
 				this.g.setNode(x[1],{ shape: 'diamond', style: "fill: #fff; stroke: #000" })
 				break;
+			case 'setStartStop':
+				this.g.setNode(x[1],{ shape: 'circle', style: "fill: #fff; stroke: #000" })
+				break;
 			case 'AddCoherenceEdge':
 				this.g.setEdge(x[1], x[2], {
 					lineInterpolate: 'basis' 
@@ -188,21 +191,21 @@ var schedulestory = new dagred3Story("#schedule", "Schedule Network",framedelay)
 schedulestory.animateStory(0,
 [
 	[ 
-		["setMilestone", "Project Finish"]
+		["setStartStop", "Finish"]
 		, 
-		["setMilestone", "Project Start"]
+		["setStartStop", "Start"]
 		,
 		["setActivity", "A"]
 		,
 		["setActivity", "B"]
 		,
-		["AddCoherenceEdge", "Project Start", "A"]
+		["AddCoherenceEdge", "Start", "A"]
 		,
-		["AddCoherenceEdge", "Project Start", "B"]
+		["AddCoherenceEdge", "Start", "B"]
 		,
-		["AddCoherenceEdge", "A", "Project Finish"]
+		["AddCoherenceEdge", "A", "Finish"]
 		,
-		["AddCoherenceEdge", "B", "Project Finish"]
+		["AddCoherenceEdge", "B", "Finish"]
 	],
 	[
 		["removeNode", "A"]
@@ -223,9 +226,9 @@ schedulestory.animateStory(0,
 		,
 		["AddCoherenceEdge", "A.2", "A Finish"]
 		,
-		["AddCoherenceEdge", "Project Start", "A Start"]
+		["AddCoherenceEdge", "Start", "A Start"]
 		,
-		["AddCoherenceEdge", "A Finish", "Project Finish"]
+		["AddCoherenceEdge", "A Finish", "Finish"]
 	],
 	[ 
 		["removeNode", "A.2"]
@@ -291,10 +294,10 @@ schedulestory.animateStory(0,
 		["AddDependencyEdge", "A.2.1", "B"]
 	],
 	[
-		["MakeRedundantEdge", "Project Start", "B"]
+		["MakeRedundantEdge", "Start", "B"]
 	],
 	[
-		["RemoveEdge", "Project Start", "B"],
+		["RemoveEdge", "Start", "B"],
 		["removeNode", "B"]
 	]
 ]);
